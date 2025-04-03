@@ -176,7 +176,7 @@ class mqtt_client:
 
 
     # TODO: These needs to receive the whole scooter object. Needs to check if scooter is already locked/unlocked
-    def scooter_unlock_single(self : object, scooter : dict) -> tuple[bool, str]:
+    def scooter_unlock_single(self : object, scooter : dict) -> tuple[bool, str, str]:
         """
         This function unlocks a scooter.
         Args:
@@ -219,20 +219,20 @@ class mqtt_client:
                     timestamp = self._message['timestamp']
 
                     if battery > 15 and status == 0:
-                        return True, "unlock successful"
+                        return True, "unlock successful", ""
                     elif battery <= 15:
-                        return False, "battery too low"
+                        return False, "battery too low", "low-battery"
                     elif status > 0:
-                        return False, self._status_codes[str(status)]
+                        return False, self._status_codes[str(status)], "scooter-inoperable"
             except Exception as e:
-                return False, f"error parsing lock confirmation: {e}"
+                return False, f"error parsing lock confirmation: {e}", "scooter-inoperable"
         else:
-            return False, "timeout waiting for unlock confirmation"
+            return False, "timeout waiting for unlock confirmation", "scooter-inoperable"
 
 
 
 
-    def scooter_lock_single(self : object, scooter : dict) -> tuple[bool, str, int]:
+    def scooter_lock_single(self : object, scooter : dict) -> tuple[bool, str, int, str]:
         """
         This function locks a scooter.
         Args:
@@ -273,13 +273,13 @@ class mqtt_client:
                     timestamp = self._message['timestamp']
 
                     if status == 0 and self.location_is_valid(location):
-                        return True, "lock successful", status
+                        return True, "lock successful", status, ""
                     elif not self.location_is_valid(location):
-                        return False, "invalid parking location", status
+                        return False, "invalid parking location", status, "invalid-parking"
                     elif status > 0:
                         return False, self._status_codes[str(status)]
             except Exception as e:
-                return False, f"error parsing lock confirmation: {e}", -1
+                return False, f"error parsing lock confirmation: {e}", -1, "scooter-inoperable"
         else:
-            return False, "timeout waiting for lock confirmation", -1
+            return False, "timeout waiting for lock confirmation", -1, "scooter-inoperable"
 

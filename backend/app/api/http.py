@@ -51,17 +51,11 @@ app.add_middleware(
 )
 
 
-#frontend_path = os.path.join(os.path.dirname(__file__), "../frontend/app", "dist")
-#frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../frontend/app/dist"))
-#app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-
 frontend_path = "/frontend/app/dist"
 index_file = os.path.join(frontend_path, "index.html")
 
-# 1. Serve alle filer i dist (inkl. scooter.gif, favicon, etc.)
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
-# 2. Serve assets fra /assets
 app.mount("/assets", StaticFiles(directory=os.path.join(frontend_path, "assets")), name="assets")
 
 
@@ -159,12 +153,10 @@ if DEPLOYMENT_MODE == "TEST":
 
         exclude_paths = ["/robots.txt", "/openapi.json", "/docs", "/redoc", "/docs/oauth2-redirect"]
 
-        # 🚀 Legg til app-routes
         for route in app.routes:
             if hasattr(route, "path") and route.path not in exclude_paths:
                 lines.append(f"Endpoint: {route.path}")
 
-        # 🚀 Legg til router-routes med prefiks
         for route in api_router.routes:
             if hasattr(route, "path"):
                 full_path = f"/api/v1{route.path}"
@@ -202,8 +194,11 @@ async def scooter_unlock_single(
     status_code = 200 if resp[0] else 400
 
     return JSONResponse(
-        content={"message": resp[1]},
-        status_code=status_code
+        status_code=status_code,
+        content=jsonable_encoder({
+            "message": resp[1],
+            "redirect": resp[3]
+        })
     )
 
 
@@ -237,27 +232,14 @@ async def scooter_lock_single(
 
     logger.debug(f"Start_time: {rental['start_time']}")
 
-    start_time = rental["start_time"].strftime("%H:%M:%S")
     logger.debug(f"Start_time: {rental['start_time']}")
 
-    #rental["start_time"] = rental["start_time"].strftime("%H:%M:%S")
-    #rental["end_time"] = rental["end_time"].strftime("%H:%M:%S")
-
-    """
-    send_rental = {
-        "rental_id": rental["rental_id"],
-        "start_time": datetime.fromtimestamp(rental["start_time"]),
-        "end_time": datetime.fromtimestamp(rental["end_time"]),
-        "price": rental["price"],
-        "user_id": rental["user_id"],
-        "scooter_id": rental["scooter_id"],
-        "active": rental["active"],
-    }
-    """
-
     return JSONResponse(
-        content=jsonable_encoder({"message": rental}),
-        status_code=status_code
+        status_code=status_code,
+        content=jsonable_encoder({
+            "message": rental,
+            "redirect": resp[3]
+        })
     )
 
 
@@ -317,7 +299,6 @@ app.include_router(api_router, prefix="/api/v1")
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str, request: Request):
-    # Ikke håndter API-ruter
     if full_path.startswith("api/"):
         return Response(status_code=404)
 
