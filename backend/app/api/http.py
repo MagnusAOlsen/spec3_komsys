@@ -4,6 +4,7 @@ import logging
 from fastapi.encoders import jsonable_encoder
 from fastapi.staticfiles import StaticFiles
 from logic import weather
+from threading import Thread
 from fastapi.responses import FileResponse, JSONResponse
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -262,6 +263,130 @@ async def scooter_lock_single(
         content=jsonable_encoder({"message": rental}),
         status_code=status_code
     )
+
+
+@api_router.post("/scooter/{uuid}/multi-session")
+async def multi_session(
+    uuid: str, 
+    request: Request,
+    user_id: str = Query(..., description="ID of the user trying to unlock the scooter")
+):
+    logger.debug("Request: HTTP POST /scooter/{uuid}/multi-session?user_id={user_id}")
+    resp = request.app.state.multi_ride_service.session_request(user_id, uuid)
+    status_code = 200 if resp[0] else 400
+
+    return JSONResponse(
+        content={
+            "message": resp[1],
+            "redirect": resp[2],
+            "session": resp[3]
+            },
+        status_code=status_code
+    ) 
+
+@api_router.post("/scooter/{uuid}/join-session/{mid}")
+async def join_session(
+    uuid: str, 
+    mid: str,
+    request: Request,
+    user_id: str = Query(..., description="ID of the user trying to unlock the scooter")
+):
+    logger.debug("Request: HTTP POST /scooter/{uuid}/multi-session/{mid}?user_id={user_id}")
+    resp = request.app.state.multi_ride_service.join_session(mid, user_id, uuid)
+    status_code = 200 if resp[0] else 400
+
+    return JSONResponse(
+        content={
+            "message": resp[1],
+            "redirect": resp[2],
+            "id": resp[3]
+            },
+        status_code=status_code
+    ) 
+
+
+@api_router.post("/scooter/{uuid}/start-session/{mid}")
+async def start_session(
+    uuid: str, 
+    mid: str,
+    request: Request,
+    user_id: str = Query(..., description="ID of the user trying to unlock the scooter")
+):
+    logger.debug("Request: HTTP POST /scooter/{uuid}/multi-session/{mid}?user_id={user_id}")
+    resp = request.app.state.multi_ride_service.start_session(mid, user_id, uuid)
+    status_code = 200 if resp[0] else 400
+
+    return JSONResponse(
+        content={
+            "message": resp[1],
+            "redirect": resp[2],
+            "id": resp[3]
+            },
+        status_code=status_code
+    ) 
+
+
+@api_router.post("/scooter/{uuid}/await-session/{mid}")
+async def await_session(
+    uuid: str, 
+    mid: str,
+    request: Request,
+    user_id: str = Query(..., description="ID of the user trying to unlock the scooter")
+):
+    logger.debug("Request: HTTP POST /scooter/{uuid}/multi-session/{mid}?user_id={user_id}")
+
+    request.app.state.started = [False, None]
+
+    def await_start():
+        started = request.app.state.multi_ride_service.await_start(mid)
+        request.app.state.started = started
+
+
+    await_thread = Thread(target=await_start)
+    await_thread.start()
+    await_thread.join()
+
+    resp = request.app.state.started
+    status_code = 200 if resp[0] else 400
+
+    return JSONResponse(
+        content={
+            "message": resp[1],
+            "redirect": resp[2],
+            },
+        status_code=status_code
+    ) 
+
+
+@api_router.post("/scooter/{uuid}/end-session/{mid}")
+async def end_session(
+    uuid: str, 
+    mid: str,
+    request: Request,
+    user_id: str = Query(..., description="ID of the user trying to unlock the scooter")
+):
+    logger.debug("Request: HTTP POST /scooter/{uuid}/multi-session/{mid}?user_id={user_id}")
+    resp = request.app.state.multi_ride_service.end_session(mid, user_id)
+    status_code = 200 if resp[0] else 400
+
+    return JSONResponse(
+        content={
+            "message": resp[1],
+            "redirect": resp[2]
+            },
+        status_code=status_code
+    ) 
+
+
+
+
+
+
+
+
+
+
+
 
 
 

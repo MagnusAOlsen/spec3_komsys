@@ -71,7 +71,7 @@ const RentScooter = () => {
     }
   };
 
-  const handleButton = async () => {
+  const handleButtonSingle = async () => {
     const resp = await fetch(
       `${apiUrl}scooter/${scooter_id_num}/single-unlock?user_id=${userId}`,
       {
@@ -88,11 +88,28 @@ const RentScooter = () => {
       sessionStorage.setItem("user_id", userId);
       navigate(`/scooter/${scooter_id_num}/active`);
     } else {
-      // Todo: Legg til endringer her.
+      const error_type = data.redirect;
+      navigate(`/error/${error_type}`);
+    }
+  };
 
-      //console.error("Unlock failed: " + data.message);
-      //alert("Unlock failed");
-      //setActiveButton(false);
+  const handleButtonMulti = async () => {
+    const resp = await fetch(
+      `${apiUrl}scooter/${scooter_id_num}/multi-unlock?user_id=${userId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await resp.json();
+
+    if (resp.status === 200) {
+      sessionStorage.setItem("user_id", userId);
+      navigate(`/scooter/${scooter_id_num}/active`);
+    } else {
       const error_type = data.redirect;
       navigate(`/error/${error_type}`);
     }
@@ -109,8 +126,14 @@ const RentScooter = () => {
         )}
       </div>
       <UserIdInput onInputChange={onInputChange} />
-      <UnlockButton activeButton={activeButton} handleButton={handleButton} />
-      <CoRideButton activeButton={activeButton} handleButton={handleButton} />
+      <UnlockButton
+        activeButton={activeButton}
+        handleButton={handleButtonSingle}
+      />
+      <CoRideButton
+        activeButton={activeButton}
+        handleButton={handleButtonMulti}
+      />
     </>
   );
 };

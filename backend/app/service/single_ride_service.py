@@ -295,7 +295,17 @@ class single_ride_service:
 
         mqtt_unlock = (True, "mqtt disabled", None) if DISABLE_MQTT else self._mqtt.scooter_unlock_single(self.scooter)
         rental_started = self._db.rental_started(self.user["id"], self.scooter["uuid"])
+        sctr_status_update = self._db.update_scooter_status(self.scooter["uuid"], self.scooter["status"])
 
+        if not sctr_status_update:
+            self._warn_logger(
+                title="single scooter unlock failed",
+                culprit="database",
+                scooter_id=self.scooter["uuid"],
+                message="database error: scooter status update failed",
+                function=f"self._db.update_scooter_status({self.scooter['uuid']}, {self.scooter["status"]})",
+            )
+            return False, "scooter status update failed", 7
 
         if mqtt_unlock[0] and rental_started:
             return True, "unlock successful", ""

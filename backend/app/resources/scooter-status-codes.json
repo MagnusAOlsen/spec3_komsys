@@ -2,7 +2,7 @@
   "0": "ok",
   "1": "battery low",
   "2": "bad weather",
-  "3": "crash sensor error",
+  "3": "distress signal",
   "4": "distress signaling unit error",
   "5": "weather sensor error",
   "6": "gps error",
@@ -12,4 +12,3 @@
   "10": "charging",
   "11": "unlocked"
 }
-  
