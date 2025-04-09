@@ -10,10 +10,8 @@ const ErrorPage = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorImage, setErrorImage] = useState<string | null>(null);
   const [errorTitle, setErrorTitle] = useState<string | null>(null);
-  //const errorType = "Bad Weather"; // This should be passed as a prop
   const { error_type } = useParams<{ error_type: string }>();
   const [errorType, setErrorType] = useState<string | undefined>("low-battery");
-  //const errorTypeStr = ;
 
   const ErrorDict: Record<
     string,
@@ -72,6 +70,11 @@ const ErrorPage = () => {
     "transaction-error": {
       title: "Transaction Error",
       message: "There was an error with the transaction. Please try again.",
+      image: error,
+    },
+    "session-error": {
+      title: "Session Error",
+      message: "An session error occurred. Please try again.",
       image: error,
     },
   };
